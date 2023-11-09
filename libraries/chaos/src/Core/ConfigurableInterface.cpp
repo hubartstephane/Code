@@ -37,6 +37,12 @@ namespace chaos
 		return {};
 	}
 
+	void ConfigurableInterface::OnConfigurationChanged()
+	{
+		InitializeFromConfiguration(, InitializationType::HOT_RELOAD)
+	
+	}
+
 	// ---------------------------------------------------------------------
 	// ObjectConfigurationBase implementation
 	// ---------------------------------------------------------------------

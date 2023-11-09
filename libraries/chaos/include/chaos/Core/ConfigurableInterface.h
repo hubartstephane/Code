@@ -8,7 +8,19 @@ namespace chaos
 	class ChildObjectConfiguration;
 	class RootObjectConfiguration;
 
+	enum class InitializationType;
+
 #elif !defined CHAOS_TEMPLATE_IMPLEMENTATION
+
+	/**
+	* InitializationType: the type of initialization
+	*/
+
+	enum class CHAOS_API InitializationType : int
+	{
+		INITIAL,
+		HOT_RELOAD
+	};
 
 	/**
 	* ConfigurableInterface: an interface representing that can have a configuration. Theses objects may react to confgiuration updates
@@ -41,6 +53,8 @@ namespace chaos
 		JSONReadConfiguration GetJSONReadConfiguration() const;
 		/** get the interface used for reading & writing*/
 		JSONWriteConfiguration GetJSONWriteConfiguration() const;
+
+		virtual void Initialize();
 
 	protected:
 

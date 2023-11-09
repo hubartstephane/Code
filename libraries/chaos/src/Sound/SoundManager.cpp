@@ -1179,7 +1179,7 @@ namespace chaos
 		return category;
 	}
 
-	bool SoundManager::InitializeFromConfiguration(nlohmann::json const& config)
+	bool SoundManager::InitializeFromConfiguration(JSONReadConfiguration config)
 	{
 		// initialize the categories
 		if (!LoadCategoriesFromConfiguration(config))
@@ -1190,7 +1190,7 @@ namespace chaos
 		return true;
 	}
 
-	bool SoundManager::LoadCategoriesFromConfiguration(nlohmann::json const& config)
+	bool SoundManager::LoadCategoriesFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<false>( // no [recurse] reading
 			"categories",
@@ -1198,7 +1198,7 @@ namespace chaos
 			SoundCategoryLoader(this));
 	}
 
-	bool SoundManager::LoadSourcesFromConfiguration(nlohmann::json const& config)
+	bool SoundManager::LoadSourcesFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<true>(
 			"sources",

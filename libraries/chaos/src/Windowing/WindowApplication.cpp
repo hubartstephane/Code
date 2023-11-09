@@ -115,7 +115,6 @@ namespace chaos
 		if (FindWindow(request) != nullptr)
 		{
 			Log::Error("WindowApplication::CreateTypedWindow(...) name already used");
-			Log::Error("WindowApplication::CreateTypedWindow(...) name already used");
 			return nullptr;
 		}
 
@@ -131,6 +130,7 @@ namespace chaos
 			// set the name
 			result->SetObjectNaming(request);
 			// override the create params with the JSON configuration (if any)
+			JSONReadConfiguration windows_configuration = JSONTools::GetStructure(configuration, "windows");
 			nlohmann::json const* window_configuration = nullptr;
 			if (nlohmann::json const* windows_configuration = JSONTools::GetStructure(configuration, "windows"))
 			{
@@ -186,8 +186,8 @@ namespace chaos
 		glfwSetErrorCallback(OnGLFWError);
 
 		// the glfw configuration (valid for all windows)
-		if (nlohmann::json const* glfw_configuration = JSONTools::GetStructure(configuration, "glfw"))
-			LoadFromJSON(*glfw_configuration, glfw_hints);
+		JSONReadConfiguration glfw_configuration = JSONTools::GetStructure(configuration.GetJSONReadConfiguration(), "glfw");
+		LoadFromJSON(glfw_configuration, glfw_hints);
 		glfw_hints.ApplyHints();
 
 		// create a hidden window whose purpose is to provide a sharable context for all others
@@ -533,15 +533,15 @@ namespace chaos
 		gpu_resource_manager = new GPUResourceManager;
 		if (gpu_resource_manager == nullptr)
 			return false;
+		gpu_resource_manager->SetObjectConfiguration(configuration.CreateChildConfiguration("gpu"));
 		gpu_resource_manager->StartManager();
 		// create internal resource
 		if (!gpu_resource_manager->InitializeInternalResources())
 			return false;
 		// get JSON section and load all requested resources
-		nlohmann::json const* gpu_config = JSONTools::GetStructure(configuration, "gpu");
-		if (gpu_config != nullptr)
-			if (!gpu_resource_manager->InitializeFromConfiguration(*gpu_config))
-				return false;
+		JSONReadConfiguration gpu_config = JSONTools::GetStructure(configuration.GetJSONReadConfiguration(), "gpu");
+		if (!gpu_resource_manager->InitializeFromConfiguration(*gpu_config))
+			return false;
 		return true;
 	}
 
@@ -589,24 +589,31 @@ namespace chaos
 		if (!Application::InitializeManagers())
 			return false;
 
+		JSONReadConfiguration read_configuration = GetJSONReadConfiguration();
+
 		// update some internals
-		JSONTools::GetAttribute(configuration, "max_tick_duration", max_tick_duration);
-		JSONTools::GetAttribute(configuration, "forced_tick_duration", forced_tick_duration);
+		JSONTools::GetAttribute(read_configuration, "max_tick_duration", max_tick_duration);
+		JSONTools::GetAttribute(read_configuration, "forced_tick_duration", forced_tick_duration);
 
 		// initialize the clock
 		main_clock = new Clock("main_clock");
 		if (main_clock == nullptr)
 			return false;
-		nlohmann::json const* clock_config = JSONTools::GetStructure(configuration, "clocks");
-		if (clock_config != nullptr)
-			main_clock->InitializeFromConfiguration(*clock_config);
+		main_clock->SetObject
+
+
+
+
+		JSONReadConfiguration clock_config = JSONTools::GetStructure(read_configuration, "clocks");
+		
+		main_clock->InitializeFromConfiguration(*clock_config);
 
 		// initialize the sound manager
 		sound_manager = new SoundManager();
 		if (sound_manager == nullptr)
 			return false;
 		sound_manager->StartManager();
-		nlohmann::json const* sound_config = JSONTools::GetStructure(configuration, "sounds");
+		nlohmann::json const* sound_config = JSONTools::GetStructure(read_configuration, "sounds");
 		if (sound_config != nullptr)
 			sound_manager->InitializeFromConfiguration(*sound_config);
 
@@ -900,12 +907,12 @@ namespace chaos
 				}
 				if (ImGui::MenuItem("Open Config File", nullptr, false, true))
 				{
-					WinTools::ShowFile(JSONTools::DumpConfigFile(configuration));
+					WinTools::ShowFile(JSONTools::DumpConfigFile(*configuration.GetJSONReadConfiguration().read_config, "config.json"));
 				}
 				if (ImGui::MenuItem("Open Persistent File", nullptr, false, true))
 				{
-					SavePersistentDataFile();
-					WinTools::ShowFile(GetPersistentDataPath());
+					configuration.SaveWriteConfiguration(GetWriteConfigurationPath());
+					WinTools::ShowFile(GetWriteConfigurationPath());
 				}
 				ImGui::Separator();
 				if (ImGui::MenuItem("Quit", nullptr, false, true))
@@ -938,7 +945,7 @@ namespace chaos
 		return result;
 	}
 
-
+#if 0
 	void WindowApplication::OnReadPersistentData(nlohmann::json const& json)
 	{
 		Application::OnReadPersistentData(json);
@@ -955,6 +962,17 @@ namespace chaos
 	{
 		Application::OnWritePersistentData(json);
 	}
+#endif
+
+
+
+
+
+
+
+
+
+
 
 #ifdef _WIN32
 

@@ -445,7 +445,7 @@ namespace chaos
 		return true;
 	}
 
-	void Clock::InitializeFromConfiguration(nlohmann::json const & config)
+	void Clock::InitializeFromConfiguration(JSONReadConfiguration config)
 	{
 
 

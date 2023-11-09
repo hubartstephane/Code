@@ -530,7 +530,7 @@ namespace chaos
 		bool SetListenerPosition(glm::vec3 const& position, glm::vec3 const& velocity = { 0.0f, 0.0f, 0.0f });
 
 		/** initialize the manager from a configuration file */
-		virtual bool InitializeFromConfiguration(nlohmann::json const& config) override;
+		virtual bool InitializeFromConfiguration(JSONReadConfiguration config) override;
 
 		/** getters on sound */
 		size_t GetSoundCount() const;
@@ -636,9 +636,9 @@ namespace chaos
 		SoundCategory* AddJSONCategory(char const* name, nlohmann::json const& json);
 
 		/** load the categories from configuration */
-		bool LoadCategoriesFromConfiguration(nlohmann::json const& config);
+		bool LoadCategoriesFromConfiguration(JSONReadConfiguration config);
 		/** load the sources from configuration */
-		bool LoadSourcesFromConfiguration(nlohmann::json const& config);
+		bool LoadSourcesFromConfiguration(JSONReadConfiguration config);
 
 	protected:
 

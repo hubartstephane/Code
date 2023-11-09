@@ -70,7 +70,7 @@ namespace chaos
 		/** Load a JSON file in a recursive whay */
 		CHAOS_API bool LoadJSONFile(FilePathParam const& path, nlohmann::json& result, LoadFileFlag flag = LoadFileFlag::NONE);
 		/** create a temporary directory to hold the configuration (returns the path of the directory where the file is) */
-		CHAOS_API boost::filesystem::path DumpConfigFile(nlohmann::json const& json, char const* filename = "myconfig.json");
+		CHAOS_API boost::filesystem::path DumpConfigFile(nlohmann::json const& json, char const* filename);
 		/** save the json into a file */
 		CHAOS_API bool SaveJSONToFile(nlohmann::json const& json, FilePathParam const& path);
 

@@ -157,15 +157,26 @@ namespace chaos
 		return result;
 	}
 
+
+
+
+
+
+
+
+
+
 	bool GPUResourceManager::LoadManager(FilePathParam const & path)
 	{
-		nlohmann::json json;
-		if (!JSONTools::LoadJSONFile(path, json, LoadFileFlag::RECURSIVE))
+		nlohmann::json read_config;
+		if (!JSONTools::LoadJSONFile(path, read_config, LoadFileFlag::RECURSIVE))
 			return true;
-		return InitializeFromConfiguration(json);
+		JSONReadConfiguration config;
+		config.read_config = &read_config;
+		return InitializeFromConfiguration(config);
 	}
 
-	bool GPUResourceManager::InitializeFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::InitializeFromConfiguration(JSONReadConfiguration config)
 	{
 		if (!LoadTexturesFromConfiguration(config))
 			return false;
@@ -176,7 +187,7 @@ namespace chaos
 		return true;
 	}
 
-	bool GPUResourceManager::LoadTexturesFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::LoadTexturesFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<true>(
 			"textures",
@@ -184,7 +195,7 @@ namespace chaos
 			GPUTextureLoader(this));
 	}
 
-	bool GPUResourceManager::LoadProgramsFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::LoadProgramsFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<true>(
 			"programs",
@@ -192,7 +203,7 @@ namespace chaos
 			GPUProgramLoader(this));
 	}
 
-	bool GPUResourceManager::LoadMaterialsFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::LoadMaterialsFromConfiguration(JSONReadConfiguration config)
 	{
 		GPURenderMaterialLoaderReferenceSolver solver; // finalize the missing references
 

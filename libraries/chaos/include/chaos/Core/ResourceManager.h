@@ -24,7 +24,7 @@ namespace chaos
 		bool IsManagerStarted() const;
 
 		/** initialize the manager from a configuration file */
-		virtual bool InitializeFromConfiguration(nlohmann::json const& config);
+		virtual bool InitializeFromConfiguration(JSONReadConfiguration config);
 
 	protected:
 
@@ -54,7 +54,7 @@ namespace chaos
 
 		/** an utility method to load a whole directory from a json entry */
 		template<typename LOADER>
-		static void DoLoadObjectsRecurseDirectories(nlohmann::json const& json, LOADER const& loader)
+		static void DoLoadObjectsRecurseDirectories(JSONReadConfiguration config, LOADER const& loader)
 		{
 			std::vector<std::string> paths;
 			if (LoadFromJSON(json, paths))
@@ -64,7 +64,7 @@ namespace chaos
 
 		/** an utility method to initialize a single object in an JSON array/object */
 		template<bool RECURSE, typename LOADER>
-		static auto DoLoadObjectsFromConfiguration(char const* name, nlohmann::json const& json, LOADER const & loader) -> typename LOADER::resource_type* // LOADER passed by copy is important to ensure reset for all loaded objects
+		static auto DoLoadObjectsFromConfiguration(char const* name, JSONReadConfiguration config, LOADER const & loader) -> typename LOADER::resource_type* // LOADER passed by copy is important to ensure reset for all loaded objects
 		{
 			// 1 - recurse over some directories
 			if constexpr (RECURSE)
@@ -95,7 +95,7 @@ namespace chaos
 
 		/** an utility method to initialize a list of objects from a JSON object or array */
 		template<bool RECURSE, typename LOADER>
-		static bool LoadObjectsFromConfiguration(char const* object_names, nlohmann::json const& json, LOADER const & loader)
+		static bool LoadObjectsFromConfiguration(char const* object_names, JSONReadConfiguration config, LOADER const & loader)
 		{
 			// search in json for
 			//

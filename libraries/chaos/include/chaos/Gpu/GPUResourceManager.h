@@ -51,7 +51,7 @@ namespace chaos
 	* GPUResourceManager : a manager to store different kinds of (can be depend) resources
 	**/
 
-	class CHAOS_API GPUResourceManager : public ResourceManager
+	class CHAOS_API GPUResourceManager : public ResourceManager, public ConfigurableInterface
 	{
 		friend class GPUTextureLoader;
 		friend class GPUProgramLoader;
@@ -122,7 +122,7 @@ namespace chaos
 		/** initialize the manager from a file */
 		virtual bool LoadManager(FilePathParam const& path);
 		/** loading from a JSON object */
-		virtual bool InitializeFromConfiguration(nlohmann::json const& config);
+		virtual bool InitializeFromConfiguration(JSONReadConfiguration config);
 		/** merge all resources with incomming manager */
 		virtual bool RefreshGPUResources(GPUResourceManager* other_gpu_manager);
 
@@ -136,11 +136,11 @@ namespace chaos
 	protected:
 
 		/** load the textures from configuration */
-		virtual bool LoadTexturesFromConfiguration(nlohmann::json const& config);
+		virtual bool LoadTexturesFromConfiguration(JSONReadConfiguration config);
 		/** load the programs from configuration */
-		virtual bool LoadProgramsFromConfiguration(nlohmann::json const& config);
+		virtual bool LoadProgramsFromConfiguration(JSONReadConfiguration config);
 		/** load the materials from configuration */
-		virtual bool LoadMaterialsFromConfiguration(nlohmann::json const& config);
+		virtual bool LoadMaterialsFromConfiguration(JSONReadConfiguration config);
 
 		/** merge all resources with incomming manager */
 		virtual bool RefreshTextures(GPUResourceManager* other_gpu_manager, GPUResourceManagerReloadData& reload_data);
