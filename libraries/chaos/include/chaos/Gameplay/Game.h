@@ -8,7 +8,7 @@ namespace chaos
 
 #elif !defined CHAOS_TEMPLATE_IMPLEMENTATION
 
-	class CHAOS_API Game : public Object, public InputEventReceiverInterface, public GPUProgramProviderInterface
+	class CHAOS_API Game : public Object, public InputEventReceiverInterface, public GPUProgramProviderInterface, public ConfigurableInterface
 	{
 		friend class GameGamepadManager;
 		friend class GameViewportWidget;
@@ -201,9 +201,7 @@ namespace chaos
 		virtual void DoDisplayHUD(GPURenderer* renderer, GPUProgramProviderInterface const * uniform_provider, GPURenderParams const& render_params);
 
 		/** initialization from the config file */
-		virtual bool InitializeFromConfiguration(nlohmann::json const& config);
-		/** called whenever the game values as been changed */
-		virtual void OnGameValuesChanged(bool hot_reload);
+		virtual bool InitializeFromConfiguration();
 		/** initialize some resources */
 		virtual bool CreateGPUResources();
 
@@ -217,10 +215,13 @@ namespace chaos
 		/** prepare data before saving */
 		virtual void UpdatePersistentGameData();
 
+
+
+
 		/** create the gamepad manager */
-		virtual bool CreateGamepadManager(nlohmann::json const& config);
+		virtual bool CreateGamepadManager();
 		/** create the game state_machine */
-		virtual bool CreateGameStateMachine(nlohmann::json const& config);
+		virtual bool CreateGameStateMachine();
 		/** allocate the state machine */
 		virtual SM::StateMachine* DoCreateGameStateMachine();
 		/** create the game state_machine instance */
@@ -235,9 +236,7 @@ namespace chaos
 		virtual void OnInputModeChanged(InputMode new_mode, InputMode old_mode) override;
 
 		/** create some clocks */
-		virtual bool CreateClocks(nlohmann::json const& config);
-		/** initialize the game data from configuration file */
-		virtual bool InitializeGameValues(nlohmann::json const& config, bool hot_reload);
+		virtual bool CreateClocks();
 
 		/** initialize the particle manager */
 		virtual bool CreateParticleManager();
@@ -248,19 +247,19 @@ namespace chaos
 		virtual bool FillAtlasGeneratorInput(BitmapAtlas::AtlasInput& input);
 
 		/** load object type sets concerned by the game (if required) */
-		virtual bool GenerateObjectTypeSets(nlohmann::json const& config);
+		virtual bool GenerateObjectTypeSets();
 		/** load tileset concerned by the game (if required) */
-		virtual bool GenerateTileSets(nlohmann::json const& config);
+		virtual bool GenerateTileSets();
 
 		/** a generic function to load some tiled map instances */
 		template<typename FUNC>
-		bool DoGenerateTiledMapEntity(nlohmann::json const& config, char const* property_name, char const* default_value, char const* extension, FUNC func);
+		bool DoGenerateTiledMapEntity(JSONReadConfiguration config, char const* property_name, char const* default_value, char const* extension, FUNC func);
 
 		/** read in config file for the path of the resource directory. */
-		boost::filesystem::path GetResourceDirectoryFromConfig(nlohmann::json const& config, char const* config_name, char const* default_path) const;
+		boost::filesystem::path GetResourceDirectoryFromConfig(JSONReadConfiguration config, char const* config_name, char const* default_path) const;
 
 		/** load all the levels from the game (can be simple data) */
-		virtual bool LoadLevels(nlohmann::json const& config);
+		virtual bool LoadLevels();
 		/* load one level */
 		virtual Level* DoLoadLevel(FilePathParam const& path);
 		/** create one tiled map level */
@@ -348,6 +347,9 @@ namespace chaos
 		/** create a free camera for the current level instance */
 		Camera* DoCreateFreeCamera(Camera const* camera_to_copy, LevelInstance* level_instance) const;
 
+		/** override */
+		virtual bool OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context) override;
+
 	protected:
 
 		/** the current gamepad manager */
@@ -371,9 +373,6 @@ namespace chaos
 		SubClassOf<SM::StateMachine> game_sm_class;
 		/** pointer on the state_machine instance */
 		shared_ptr<SM::StateMachineInstance> game_sm_instance;
-
-		/** the configuration object to use for game instance */
-		nlohmann::json game_instance_configuration;
 
 		/** cheating */
 #if _DEBUG

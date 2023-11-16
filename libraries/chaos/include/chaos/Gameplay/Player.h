@@ -11,7 +11,7 @@ namespace chaos
 	// Player
 	// =============================================
 
-	class CHAOS_API Player : public Tickable, public InputEventReceiverInterface, public JSONSerializableInterface
+	class CHAOS_API Player : public Tickable, public InputEventReceiverInterface, public JSONSerializableInterface, public ConfigurableInterface
 	{
 		friend class PlayerGamepadCallbacks;
 
@@ -71,10 +71,6 @@ namespace chaos
 		/** gets the right trigger */
 		float GetRightTrigger(bool previous_frame = false) const { return (previous_frame) ? previous_right_trigger : right_trigger; }
 
-		/** player initialization from config */
-		virtual bool InitializeGameValues(nlohmann::json const& config, bool hot_reload);
-		/** called after player configuration has been (re)loaded */
-		virtual void OnGameValuesChanged(bool hot_reload);
 
 		/** the processor may save its configuration into a JSON file */
 		virtual bool SerializeIntoJSON(nlohmann::json& json) const override;
@@ -125,6 +121,8 @@ namespace chaos
 
 		/** utility function to check whether a keyboard key or gamepad button is down */
 		virtual bool DoCheckKeyPressed(Key button, bool previous_frame) override;
+
+		virtual bool OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context) override;
 
 	protected:
 

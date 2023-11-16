@@ -489,7 +489,7 @@ namespace chaos
 	// MANAGER
 	// ==============================================================
 
-	class CHAOS_API SoundManager : public ResourceManager
+	class CHAOS_API SoundManager : public ResourceManager, public ConfigurableInterface
 	{
 		CHAOS_SOUND_ALL_FRIENDS
 
@@ -530,7 +530,7 @@ namespace chaos
 		bool SetListenerPosition(glm::vec3 const& position, glm::vec3 const& velocity = { 0.0f, 0.0f, 0.0f });
 
 		/** initialize the manager from a configuration file */
-		virtual bool InitializeFromConfiguration(nlohmann::json const& config) override;
+		virtual bool InitializeFromConfiguration() override;
 
 		/** getters on sound */
 		size_t GetSoundCount() const;
@@ -553,6 +553,9 @@ namespace chaos
 		glm::vec3 GetListenerVelocity() const;
 
 	protected:
+
+		/** override */
+		virtual bool OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context) override;
 
 		/** internally start the manager */
 		virtual bool DoStartManager() override;
@@ -636,9 +639,9 @@ namespace chaos
 		SoundCategory* AddJSONCategory(char const* name, nlohmann::json const& json);
 
 		/** load the categories from configuration */
-		bool LoadCategoriesFromConfiguration(nlohmann::json const& config);
+		bool LoadCategoriesFromConfiguration(JSONReadConfiguration config);
 		/** load the sources from configuration */
-		bool LoadSourcesFromConfiguration(nlohmann::json const& config);
+		bool LoadSourcesFromConfiguration(JSONReadConfiguration config);
 
 	protected:
 

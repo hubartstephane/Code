@@ -20,12 +20,9 @@ namespace chaos
 		game = game_class.CreateInstance();
 		if (game == nullptr)
 			return false;
-
-		// initialize the game from configuration
-		nlohmann::json const* game_config = JSONTools::GetStructureNode(configuration, "game");
-		if (game_config != nullptr)
-			if (!game->InitializeFromConfiguration(*game_config))
-				return false;
+		GiveChildConfiguration(game.get(), "game");
+		if (!game->InitializeFromConfiguration())
+			return false;
 		// super method : need to be done game initialization ! (because atlas creation requires the game to have loaded its levels)
 		if (!WindowApplication::PostOpenGLContextCreation())
 			return false;
@@ -123,24 +120,6 @@ namespace chaos
 		}
 		if (!has_game_window)
 			DestroyAllWindows();
-	}
-
-
-	void GameApplication::OnReadPersistentData(nlohmann::json const& json)
-	{
-		WindowApplication::OnReadPersistentData(json);
-		if (game != nullptr)
-		{
-		}
-
-	}
-
-	void GameApplication::OnWritePersistentData(nlohmann::json& json) const
-	{
-		WindowApplication::OnWritePersistentData(json);
-		if (game != nullptr)
-		{
-		}
 	}
 
 }; // namespace chaos

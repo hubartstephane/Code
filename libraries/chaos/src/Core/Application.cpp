@@ -48,9 +48,9 @@ namespace chaos
 		Log::EndTransaction();
 	}
 
-	bool Application::ReloadConfigurationFile(nlohmann::json & result) const
+	bool Application::ReloadConfigurationFile()
 	{
-		return JSONTools::LoadJSONFile(GetConfigurationPath(), result, LoadFileFlag::RECURSIVE);
+		return ReloadObjectConfiguration(true); // send notifications
 	}
 
 	boost::filesystem::path Application::GetConfigurationPath() const
@@ -58,29 +58,34 @@ namespace chaos
 		return GetResourcesPath() / "config.json";
 	}
 
-	bool Application::LoadConfigurationFile()
+	bool Application::InitializeConfigurationSystem()
 	{
-		return JSONTools::LoadJSONFile(GetConfigurationPath(), configuration, LoadFileFlag::RECURSIVE);
+		if (RootObjectConfiguration* root_config = new RootObjectConfiguration())
+		{
+			root_config->SetReadConfigPath(GetConfigurationPath());
+			root_config->SetPersistentConfigPath(GetPersistentConfigurationPath());
+			root_config->LoadConfiguration(true, true, false); // load read and persistent data. do not send notifications
+			SetObjectConfiguration(root_config);
+			return true;
+		}
+		return true;
 	}
 
-	bool Application::LoadPersistentDataFile()
+	bool Application::SavePersistentConfiguration() const
 	{
-		return JSONTools::LoadJSONFile(GetPersistentDataPath(), persistent_data, LoadFileFlag::RECURSIVE);
-	}
-
-	bool Application::SavePersistentDataFile() const
-	{
-		return JSONTools::SaveJSONToFile(persistent_data, GetPersistentDataPath());
+		if (RootObjectConfiguration* root_config = auto_cast(GetObjectConfiguration()))
+			return root_config.SavePersistentConfiguration();
+		return false;
 	}
 	
-	boost::filesystem::path Application::GetPersistentDataPath() const
+	boost::filesystem::path Application::GetPersistentConfigurationPath() const
 	{
-		return GetUserLocalTempPath() / "persistent_data.json";
+		return GetUserLocalTempPath() / "persistent_config.json";
 	}
 
 	bool Application::LoadClasses()
 	{
-		if (nlohmann::json const* classes_json = JSONTools::GetObjectNode(configuration, "classes"))
+		if (nlohmann::json const* classes_json = JSONTools::GetObjectNode(GetJSONReadConfiguration(), "classes"))
 		{
 			std::string classes_directory;
 			if (JSONTools::GetAttribute(*classes_json, "classes_directory", classes_directory))
@@ -104,6 +109,9 @@ namespace chaos
 
 	bool Application::Initialize()
 	{
+		// prepare the configuration (do not apply any data to application yet)
+		InitializeConfigurationSystem();
+
 		// prepare the logger
 		if (Logger* logger = Logger::GetInstance())
 			if (LoggerListener* listener = new FileLoggerListener())
@@ -145,6 +153,10 @@ namespace chaos
 		if (GlobalVariables::ShowDirectories.Get() || GlobalVariables::ShowInstalledResourcesDirectory.Get())
 			WinTools::ShowFile(GetResourcesPath());
 #endif
+
+		// read the configurable properties
+		ReadConfigurableProperties();
+
 		return true;
 	}
 
@@ -171,17 +183,13 @@ namespace chaos
 			// create a user temp directory if necessary */
 			CreateUserLocalTempDirectory();
 			// load the configuration file (ignore return value because there is no obligation to use a configuration file)
-			LoadConfigurationFile();
+			InitializeConfigurationSystem();
 			// initialize, run, and finalize the application
 			if (Initialize())
 			{
-				// load the persistent data file (ignore return value because there is no obligation to use a configuration file)
-				LoadPersistentDataFile();
-				ReadPersistentData();
 				result = Main();
-				// save the persistent data to file
-				WritePersistentData();
-				SavePersistentDataFile();
+				StorePersistentProperties();
+				SavePersistentConfiguration();
 			}
 			// finalization (even if initialization failed)
 			Finalize();
@@ -306,24 +314,6 @@ namespace chaos
 			if (StringTools::Stricmp(arg, flag_name) == 0)
 				return true;
 		return false;
-	}
-
-	nlohmann::json * Application::GetPersistentWriteStorage() const
-	{
-		return GetOrCreatePersistentDataStructure("application"); 
-	}
-
-	nlohmann::json const * Application::GetPersistentReadStorage() const
-	{
-		return GetPersistentDataStructure("application");
-	}
-
-	void Application::OnReadPersistentData(nlohmann::json const& json)
-	{
-	}
-
-	void Application::OnWritePersistentData(nlohmann::json& json) const
-	{
 	}
 
 #if _DEBUG

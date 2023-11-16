@@ -327,7 +327,7 @@ namespace chaos
 		return nullptr;
 	}
 
-	boost::filesystem::path Game::GetResourceDirectoryFromConfig(nlohmann::json const & config, char const * config_name, char const * default_path) const
+	boost::filesystem::path Game::GetResourceDirectoryFromConfig(JSONReadConfiguration config, char const * config_name, char const * default_path) const
 	{
 		// read in the config file the whole path
 		boost::filesystem::path result;
@@ -337,8 +337,7 @@ namespace chaos
 		if (default_path != nullptr)
 		{
 			// get the application
-			WindowApplication * application = Application::GetInstance();
-			if (application != nullptr)
+			if (WindowApplication* application = Application::GetInstance())
 			{
 				// compute resource path
 				boost::filesystem::path resources_path = application->GetResourcesPath();
@@ -350,7 +349,7 @@ namespace chaos
 	}
 
 	template<typename FUNC>
-	bool Game::DoGenerateTiledMapEntity(nlohmann::json const & config, char const * property_name, char const * default_value, char const * extension, FUNC func)
+	bool Game::DoGenerateTiledMapEntity(JSONReadConfiguration config, char const * property_name, char const * default_value, char const * extension, FUNC func)
 	{
 		// iterate the files and load the tilesets
 		boost::filesystem::path path = GetResourceDirectoryFromConfig(config, property_name, default_value);
@@ -376,10 +375,10 @@ namespace chaos
 
 	// shu49 c 'est un peut bizarre d'avoir ce genre de code ici
 
-	bool Game::GenerateObjectTypeSets(nlohmann::json const & config)
+	bool Game::GenerateObjectTypeSets()
 	{
 		return DoGenerateTiledMapEntity(
-			config,
+			GetJSONReadConfiguration(),
 			"objecttypesets_directory",
 			"objecttypesets",
 			"xml",
@@ -393,10 +392,10 @@ namespace chaos
 
 	// shu49 c 'est un peut bizarre d'avoir ce genre de code ici
 
-	bool Game::GenerateTileSets(nlohmann::json const & config)
+	bool Game::GenerateTileSets()
 	{
 		return DoGenerateTiledMapEntity(
-			config,
+			GetJSONReadConfiguration(),
 			"tilesets_directory",
 			"tilesets",
 			"tsx",
@@ -408,10 +407,10 @@ namespace chaos
 			});
 	}
 
-	bool Game::LoadLevels(nlohmann::json const & config)
+	bool Game::LoadLevels()
 	{
 		// iterate the files and load the levels
-		boost::filesystem::path path = GetResourceDirectoryFromConfig(config, "levels_directory", "levels");
+		boost::filesystem::path path = GetResourceDirectoryFromConfig(GetJSONReadConfiguration(), "levels_directory", "levels");
 
 		FileTools::WithDirectoryContent(path, [this](boost::filesystem::path const& p)
 		{
@@ -516,7 +515,7 @@ namespace chaos
 		return true;
 	}
 
-	bool Game::CreateClocks(nlohmann::json const& config)
+	bool Game::CreateClocks()
 	{
 		Clock* application_clock = GetApplicationClock();
 		if (application_clock == nullptr)
@@ -528,10 +527,10 @@ namespace chaos
 		return true;
 	}
 
-	bool Game::CreateGamepadManager(nlohmann::json const& config)
+	bool Game::CreateGamepadManager()
 	{
 		bool gamepad_enabled = true;
-		JSONTools::GetAttribute(config, "gamepad_enabled", gamepad_enabled, true);
+		JSONTools::GetAttribute(GetJSONReadConfiguration(), "gamepad_enabled", gamepad_enabled, true);
 		if (gamepad_enabled)
 		{
 			gamepad_manager = new GameGamepadManager(this);
@@ -541,38 +540,37 @@ namespace chaos
 		return true;
 	}
 
-	bool Game::InitializeFromConfiguration(nlohmann::json const& config)
+	bool Game::InitializeFromConfiguration()
 	{
+
+
+
+
+
 		// initialize the gamepad manager
-		if (!CreateGamepadManager(config))
+		if (!CreateGamepadManager())
 			return false;
 		// create game state_machine
-		if (!CreateGameStateMachine(config))
+		if (!CreateGameStateMachine())
 			return false;
 		// initialize clocks
-		if (!CreateClocks(config))
+		if (!CreateClocks())
 			return false;
 		// initialize game values
-		if (!InitializeGameValues(config, false)) // false => not hot_reload
+		if (!ReadConfigurableProperties(ReadConfigurablePropertiesContext::INITIALIZATION))
 			return false;
-		OnGameValuesChanged(false);
-
 
 		// shu49 c'est bizare d avoir le type sets ici
 
-
 		// loading object type sets
-		if (!GenerateObjectTypeSets(config))
+		if (!GenerateObjectTypeSets())
 			return false;
 		// loading tilemapset
-		if (!GenerateTileSets(config))
+		if (!GenerateTileSets())
 			return false;
 		// load exisiting levels
-		if (!LoadLevels(config))
+		if (!LoadLevels())
 			return false;
-
-		// load the best score if any
-		SerializePersistentGameData(false);
 		return true;
 	}
 
@@ -617,6 +615,20 @@ namespace chaos
 			return 0.0;
 		return root_clock->GetClockTime();
 	}
+
+	bool Game::OnStorePersistentProperties(JSONWriteConfiguration config)
+	{
+		JSONTools::SetAttribute(config, "best_score", best_score);
+		return true;
+	}
+
+
+
+
+
+
+
+
 
 	void Game::UpdatePersistentGameData()
 	{
@@ -766,7 +778,7 @@ namespace chaos
 		return PlaySound(name, play_desc, category_tag);
 	}
 
-	bool Game::CreateGameStateMachine(nlohmann::json const& config)
+	bool Game::CreateGameStateMachine()
 	{
 		game_sm = DoCreateGameStateMachine();
 		if (game_sm == nullptr)
@@ -819,28 +831,20 @@ namespace chaos
 		return true;
 	}
 
-	bool Game::InitializeGameValues(nlohmann::json const & config, bool hot_reload)
-	{
-		// capture the game instance configuration
-		nlohmann::json const* gi_config = JSONTools::GetObjectNode(config, "game_instance");
-		if (gi_config != nullptr)
-			game_instance_configuration = *gi_config;
-		else
-			game_instance_configuration = nlohmann::json();
 
-		// read dedicated game values
+	bool Game::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
+	{
 		CHAOS_JSON_ATTRIBUTE(config, mouse_sensitivity);
 		CHAOS_JSON_ATTRIBUTE(config, gamepad_sensitivity);
 		CHAOS_JSON_ATTRIBUTE(config, viewport_wanted_aspect);
+		CHAOS_JSON_ATTRIBUTE(config, best_score);
 		return true;
 	}
 
-	void Game::OnGameValuesChanged(bool hot_reload)
-	{
-		if (game_instance != nullptr)
-			if (game_instance->InitializeGameValues(game_instance_configuration, hot_reload))
-				game_instance->OnGameValuesChanged(hot_reload);
-	}
+
+
+
+
 
 	void Game::OnEnterMainMenu(bool very_first)
 	{
@@ -1307,12 +1311,28 @@ namespace chaos
 
 	bool Game::ReloadGameConfiguration()
 	{
+		
+
+
+
+
+
+
+
+
 		// gets application
 		WindowApplication * application = Application::GetInstance();
 		if (application == nullptr)
 			return false;
 		// this call may take a while. Avoid Frame rate jump
 		application->FreezeNextFrameTickDuration();
+
+
+
+
+
+
+
 		// reload the whole configuration file
 		nlohmann::json config;
 		if (!application->ReloadConfigurationFile(config))

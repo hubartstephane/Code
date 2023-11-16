@@ -41,7 +41,7 @@ namespace chaos
 		return manager_started;
 	}
 
-	bool ResourceManager::InitializeFromConfiguration(nlohmann::json const & config)
+	bool ResourceManager::InitializeFromConfiguration()
 	{
 		return true;
 	}

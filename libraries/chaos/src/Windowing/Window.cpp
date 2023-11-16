@@ -1065,6 +1065,7 @@ namespace chaos
 
 	bool Window::InitializeFromConfiguration(nlohmann::json const& config)
 	{
+		ReadConfigurableProperties();
 		RegisterKnownDrawables();
 		return true; 
 	}
@@ -1080,19 +1081,34 @@ namespace chaos
 		});
 	}
 
-	nlohmann::json * Window::GetPersistentWriteStorage() const
+	bool Window::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
 	{
-		//if (Application* application = Application::GetInstance())
-		//	return application->GetOrCreatePersistentDataStructure("windows", GetName());
-		return nullptr;
+		glm::ivec2 position = { 0, 0 };		
+		if (JSONTools::GetAttribute(config, "position", position))
+			SetWindowPosition(position);
+
+		glm::ivec2 size = { 0, 0 };
+		if (JSONTools::GetAttribute(config, "size", size))
+			SetWindowSize(size);
+
+		return true;
 	}
 
-	nlohmann::json const * Window::GetPersistentReadStorage() const
+	bool Window::OnStorePersistentProperties(JSONWriteConfiguration config)
 	{
-		//if (Application* application = Application::GetInstance())
-		//	return application->GetPersistentDataStructure("windows", GetName());
-		return nullptr;
+		JSONTools::SetAttribute(config, "position", GetWindowPosition());
+		JSONTools::SetAttribute(config, "size", GetWindowSize());
+		return true;
 	}
+
+
+
+
+
+#if 0
+
+	// SHU_PERSISTENT
+
 
 	void Window::OnReadPersistentData(nlohmann::json const& json)
 	{
@@ -1109,6 +1125,19 @@ namespace chaos
 		JSONTools::SetAttribute(json, "position", GetWindowPosition());
 		JSONTools::SetAttribute(json, "size", GetWindowSize());
 	}
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 	bool Window::DoProcessAction(GPUProgramProviderExecutionData const& execution_data) const
 	{

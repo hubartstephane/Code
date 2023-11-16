@@ -54,28 +54,29 @@ namespace chaos
 		return false;
 	}
 
-	void ConfigurableInterface::OnConfigurationChanged(JSONReadConfiguration read_config)
+	bool ConfigurableInterface::OnConfigurationChanged(JSONReadConfiguration read_config)
 	{
-		ReadConfigurableProperties(ReadConfigurablePropertiesContext::HOT_RELOAD);
+		return ReadConfigurableProperties(ReadConfigurablePropertiesContext::HOT_RELOAD);
 	}
 
-	void ConfigurableInterface::ReadConfigurableProperties(ReadConfigurablePropertiesContext context)
+	bool ConfigurableInterface::ReadConfigurableProperties(ReadConfigurablePropertiesContext context)
 	{
-		OnReadConfigurableProperties(GetJSONReadConfiguration(), context);
+		return OnReadConfigurableProperties(GetJSONReadConfiguration(), context);
 	}
 
-	void ConfigurableInterface::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
-	{		
+	bool ConfigurableInterface::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
+	{	
+		return true;
 	}
 
-	void ConfigurableInterface::StorePersistentProperties()
+	bool ConfigurableInterface::StorePersistentProperties()
 	{
-		OnStorePersistentProperties(GetJSONWriteConfiguration());
+		return OnStorePersistentProperties(GetJSONWriteConfiguration());
 	}
 
-	void ConfigurableInterface::OnStorePersistentProperties(JSONWriteConfiguration config)
+	bool ConfigurableInterface::OnStorePersistentProperties(JSONWriteConfiguration config)
 	{
-
+		return true;
 	}
 
 }; // namespace chaos

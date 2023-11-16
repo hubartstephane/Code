@@ -154,8 +154,20 @@ namespace chaos
 			if (window_configuration == nullptr)
 				window_configuration = &default_window_config;
 			result->InitializeFromConfiguration(*window_configuration);
+
+
+
+
+
+			// SHU_PERSISTENT
+#if 0 
 			// read information from session file
 			result->ReadPersistentData();
+			
+#endif			
+			
+			
+			
 			// create the root widget
 			result->CreateRootWidget();
 			// notify the application
@@ -166,7 +178,17 @@ namespace chaos
 
 	void WindowApplication::OnWindowDestroyed(Window* window)
 	{
+
+
+		// SHU_PERSISTENT
+#if 0
 		window->WritePersistentData();
+#endif
+		window->StorePersistentProperties();
+		
+		
+		
+		
 		window->Finalize();
 		window->DestroyImGuiContext();
 		window->DestroyGLFWWindow();
@@ -249,13 +271,13 @@ namespace chaos
 	void WindowApplication::Quit()
 	{
 		// write the name of the windows that are opened
-		if (nlohmann::json* json = GetPersistentWriteStorage())
-		{
-			std::vector<char const*> names;
-			for (shared_ptr<Window> const& window : windows)
-				names.push_back(window->GetName());
-			JSONTools::SetAttribute(*json, "opened_window", names);
-		}
+		JSONWriteConfiguration config = GetJSONWriteConfiguration();
+
+		std::vector<char const*> names;
+		for (shared_ptr<Window> const& window : windows)
+			names.push_back(window->GetName());
+		JSONTools::SetAttribute(config, "opened_window", names);
+
 		// effectively quit the application
 		DestroyAllWindows();
 	}
@@ -529,6 +551,7 @@ namespace chaos
 		gpu_resource_manager = new GPUResourceManager;
 		if (gpu_resource_manager == nullptr)
 			return false;
+		GiveChildConfiguration(gpu_resource_manager, "gpu");
 		gpu_resource_manager->StartManager();
 		// create internal resource
 		if (!gpu_resource_manager->InitializeInternalResources())
@@ -548,6 +571,16 @@ namespace chaos
 			// this call may block for too much time
 			FreezeNextFrameTickDuration();
 
+			if (gpu_resource_manager != nullptr)
+				gpu_resource_manager->ReloadObjectConfiguration(true); // send notification
+
+
+
+
+
+
+#if 0
+
 			// reload the configuration file
 			nlohmann::json config;
 			if (!ReloadConfigurationFile(config))
@@ -566,6 +599,11 @@ namespace chaos
 			if (other_gpu_resource_manager->InitializeFromConfiguration(*gpu_config))
 				gpu_resource_manager->RefreshGPUResources(other_gpu_resource_manager.get());
 			other_gpu_resource_manager->StopManager();
+#endif
+
+
+
+
 			return true;
 		});
 	}
@@ -602,9 +640,10 @@ namespace chaos
 		if (sound_manager == nullptr)
 			return false;
 		sound_manager->StartManager();
-		nlohmann::json const* sound_config = JSONTools::GetStructureNode(configuration, "sounds");
-		if (sound_config != nullptr)
-			sound_manager->InitializeFromConfiguration(*sound_config);
+
+		GiveChildConfiguration(sound_manager, "sounds");
+
+		sound_manager->InitializeFromConfiguration();
 
 		return true;
 	}
@@ -900,7 +939,7 @@ namespace chaos
 				}
 				if (ImGui::MenuItem("Open Persistent File", nullptr, false, true))
 				{
-					SavePersistentDataFile();
+					SavePersistentConfiguration();
 					WinTools::ShowFile(GetPersistentDataPath());
 				}
 				ImGui::Separator();
@@ -934,23 +973,30 @@ namespace chaos
 		return result;
 	}
 
-
-	void WindowApplication::OnReadPersistentData(nlohmann::json const& json)
+	bool WindowApplication::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
 	{
-		Application::OnReadPersistentData(json);
+		if (!Application::OnReadConfigurableProperties(config, context))
+			return false;
 
 		// open windows that were there during previous session
 		std::vector<std::string> opened_window;
-		JSONTools::GetAttribute(json, "opened_window", opened_window);
+		JSONTools::GetAttribute(config, "opened_window", opened_window);
 
 		for (std::string const& name : opened_window)
 			SetKnownWindowVisibility(name.c_str(), true);
+
+		return true;
 	}
 
-	void WindowApplication::OnWritePersistentData(nlohmann::json & json) const
-	{
-		Application::OnWritePersistentData(json);
-	}
+
+
+
+
+
+
+
+
+
 
 #ifdef _WIN32
 

@@ -24,7 +24,7 @@ namespace chaos
 		bool IsManagerStarted() const;
 
 		/** initialize the manager from a configuration file */
-		virtual bool InitializeFromConfiguration(nlohmann::json const& config);
+		virtual bool InitializeFromConfiguration();
 
 	protected:
 
@@ -95,7 +95,7 @@ namespace chaos
 
 		/** an utility method to initialize a list of objects from a JSON object or array */
 		template<bool RECURSE, typename LOADER>
-		static bool LoadObjectsFromConfiguration(char const* object_names, nlohmann::json const& json, LOADER const & loader)
+		static bool LoadObjectsFromConfiguration(char const* object_names, JSONReadConfiguration config, LOADER const & loader)
 		{
 			// search in json for
 			//
@@ -103,7 +103,7 @@ namespace chaos
 			// or
 			// "object_names": [...] -> read all entries inside as anonymous data
 			//
-			if (nlohmann::json const* objects_json = JSONTools::GetStructureNode(json, object_names))
+			if (nlohmann::json const* objects_json = JSONTools::GetStructureNode(config, object_names))
 			{
 				for (nlohmann::json::const_iterator it = objects_json->begin(); it != objects_json->end(); ++it)
 				{

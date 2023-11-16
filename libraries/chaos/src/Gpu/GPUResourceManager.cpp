@@ -157,6 +157,8 @@ namespace chaos
 		return result;
 	}
 
+
+#if 0
 	bool GPUResourceManager::LoadManager(FilePathParam const & path)
 	{
 		nlohmann::json json;
@@ -164,19 +166,14 @@ namespace chaos
 			return true;
 		return InitializeFromConfiguration(json);
 	}
+#endif
 
-	bool GPUResourceManager::InitializeFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::InitializeFromConfiguration()
 	{
-		if (!LoadTexturesFromConfiguration(config))
-			return false;
-		if (!LoadProgramsFromConfiguration(config))
-			return false;
-		if (!LoadMaterialsFromConfiguration(config))
-			return false;
-		return true;
+		return ReadConfigurableProperties(ReadConfigurablePropertiesContext::INITIALIZATION);
 	}
 
-	bool GPUResourceManager::LoadTexturesFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::LoadTexturesFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<true>(
 			"textures",
@@ -184,7 +181,7 @@ namespace chaos
 			GPUTextureLoader(this));
 	}
 
-	bool GPUResourceManager::LoadProgramsFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::LoadProgramsFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<true>(
 			"programs",
@@ -192,7 +189,7 @@ namespace chaos
 			GPUProgramLoader(this));
 	}
 
-	bool GPUResourceManager::LoadMaterialsFromConfiguration(nlohmann::json const& config)
+	bool GPUResourceManager::LoadMaterialsFromConfiguration(JSONReadConfiguration config)
 	{
 		GPURenderMaterialLoaderReferenceSolver solver; // finalize the missing references
 
@@ -438,7 +435,6 @@ namespace chaos
 		quad_index_buffer->IncrementUsageCount();
 
 		return true;
-
 	}
 
 	GPUBuffer* GPUResourceManager::GetQuadIndexBuffer(size_t* result_quad_count)
@@ -451,6 +447,35 @@ namespace chaos
 	GPUMesh* GPUResourceManager::GetQuadMesh()
 	{
 		return quad_mesh.get();
+	}
+
+	bool GPUResourceManager::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
+	{
+		if (context == ReadConfigurablePropertiesContext::INITIALIZATION)
+		{
+			if (!LoadTexturesFromConfiguration(config))
+				return false;
+			if (!LoadProgramsFromConfiguration(config))
+				return false;
+			if (!LoadMaterialsFromConfiguration(config))
+				return false;
+			return true;
+		}
+		else if (context == ReadConfigurablePropertiesContext::HOT_RELOAD)
+		{
+			// create a temporary manager
+			if (shared_ptr<GPUResourceManager> other_gpu_resource_manager = new GPUResourceManager) // destroyed at the end of the function
+			{
+				if (other_gpu_resource_manager->StartManager())
+				{
+					other_gpu_resource_manager->InitializeFromConfiguration();
+					RefreshGPUResources(other_gpu_resource_manager.get());
+					other_gpu_resource_manager->StopManager();
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 }; // namespace chaos

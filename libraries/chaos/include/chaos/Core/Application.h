@@ -9,9 +9,8 @@ namespace chaos
 	/**
 	* Application : used to store generic application data
 	*/
-	class CHAOS_API Application : public Object, public InputEventReceiverInterface, public PersistentDataInterface
+	class CHAOS_API Application : public Object, public InputEventReceiverInterface, public ConfigurableInterface
 	{
-
 	public:
 
 		/** constructor */
@@ -50,25 +49,10 @@ namespace chaos
 		/** get the application local temp path for execution data */
 		boost::filesystem::path const& GetUserLocalTempPath() const { return userlocal_temp_path; }
 
-		/** get the configuration */
-		nlohmann::json const& GetConfiguration() const { return configuration; }
 		/** get the configuration file path */
 		boost::filesystem::path GetConfigurationPath() const;
-
-		/** get the persistent data */
-		template<typename ...PARAMS>
-		nlohmann::json const* GetPersistentDataStructure(PARAMS && ...params) const
-		{ 
-			return JSONTools::GetObjectNode(persistent_data, std::forward<PARAMS>(params)...);
-		}
-		/** get the persistent data (writeable) */
-		template<typename ...PARAMS>
-		nlohmann::json * GetOrCreatePersistentDataStructure(PARAMS && ...params) const
-		{
-			return JSONTools::GetOrCreateObjectNode(persistent_data, std::forward<PARAMS>(params)...);
-		}
 		/** get the persistent data file path */
-		boost::filesystem::path GetPersistentDataPath() const;
+		boost::filesystem::path GetPersistentConfigurationPath() const;
 
 		/** create the use local temp directory */
 		boost::filesystem::path const& CreateUserLocalTempDirectory() const;
@@ -83,8 +67,8 @@ namespace chaos
 		/** check whether -flag_name is in command line */
 		static bool HasApplicationCommandLineFlag(char const* flag_name);
 
-		/** reloading the configuration file (do not apply it to any object at all) */
-		bool ReloadConfigurationFile(nlohmann::json& result) const;
+		/** reload the configuration */
+		bool ReloadConfigurationFile();
 
 #if _DEBUG
 		/** set redirection file directories */
@@ -115,26 +99,34 @@ namespace chaos
 		/** finalize the managers */
 		virtual void FinalizeManagers();
 
-		/** loading the configuration file */
-		bool LoadConfigurationFile();
-		/** loading the persistent data file */
-		bool LoadPersistentDataFile();
+
+
+
+		// SHU_PERSISTENT
+
+
+
+
+
+		/** initialization of the configuration system */
+		bool InitializeConfigurationSystem();
 		/** saving the persistent data file */
-		bool SavePersistentDataFile() const;
+		bool SavePersistentConfiguration() const;
+
+
+
+
+
+
+
+
+
+
 		/** load the extra classes */
 		virtual bool LoadClasses();
 		/** log some application information */
 		virtual void LogExecutionInformation();
 		
-		/** override */
-		virtual nlohmann::json * GetPersistentWriteStorage() const override;
-		/** override */
-		virtual nlohmann::json const* GetPersistentReadStorage() const override;
-		/** override */
-		virtual void OnReadPersistentData(nlohmann::json const& json) override;
-		/** override */
-		virtual void OnWritePersistentData(nlohmann::json& json) const override;
-
 	protected:
 
 		/** the single application instance */
@@ -156,16 +148,6 @@ namespace chaos
 		boost::filesystem::path userlocal_path;
 		/** path of the application to store user temp data */
 		boost::filesystem::path userlocal_temp_path;
-
-		/** the JSON configuration file if existing */
-		nlohmann::json configuration;
-		/** the JSON persistent data if existing */
-		mutable nlohmann::json persistent_data;
-
-
-		DisableReferenceCount<RootObjectConfiguration> configurationX;
-
-
 
 		/** redirection source directories */
 #if _DEBUG

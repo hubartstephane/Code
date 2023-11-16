@@ -76,6 +76,7 @@ namespace chaos
 		Player * result = DoCreatePlayer();
 		if (result == nullptr)
 			return nullptr;
+		GiveChildConfiguration(result, "player");
 		// initialize the player
 		if (!result->Initialize(this))
 		{
@@ -193,9 +194,7 @@ namespace chaos
 		game = in_game;
 
 		// initialize from configuration
-		if (!InitializeGameValues(in_game->game_instance_configuration, false)) // false for not hot reload
-			return false;
-		OnGameValuesChanged(false);
+		ReadConfigurableProperties(ReadConfigurablePropertiesContext::INITIALIZATION);
 
 		// create the game instance clocks
 		Clock * root_clock = in_game->GetRootClock();
@@ -379,7 +378,6 @@ namespace chaos
 			if (!SaveIntoJSON(checkpoint->level_save, *level_instance))
 				return false;
 
-		WinTools::CopyStringToClipboard(checkpoint->level_save.dump(2).c_str());
 
 
 
@@ -463,31 +461,6 @@ namespace chaos
 	SoundCategory const * GameInstance::GetSoundCategory() const
 	{
 		return sound_category.get();
-	}
-
-	bool GameInstance::InitializeGameValues(nlohmann::json const& config, bool hot_reload)
-	{
-		// capture the player configuration
-		nlohmann::json const* p_config = JSONTools::GetObjectNode(config, "player");
-		if (p_config != nullptr)
-			player_configuration = *p_config;
-		else
-			player_configuration = nlohmann::json();
-
-		return true;
-	}
-
-	void GameInstance::OnGameValuesChanged(bool hot_reload)
-	{
-		size_t count = players.size();
-		for (size_t i = 0; i < count; ++i)
-		{
-			Player* player = players[i].get();
-			if (player == nullptr)
-				continue;
-			if (player->InitializeGameValues(player_configuration, hot_reload))
-				player->OnGameValuesChanged(hot_reload);
-		}
 	}
 
 }; // namespace chaos

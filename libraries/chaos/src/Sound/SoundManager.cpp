@@ -1179,18 +1179,27 @@ namespace chaos
 		return category;
 	}
 
-	bool SoundManager::InitializeFromConfiguration(nlohmann::json const& config)
+	bool SoundManager::InitializeFromConfiguration()
 	{
-		// initialize the categories
-		if (!LoadCategoriesFromConfiguration(config))
-			return false;
-		// Initialize the sources
-		if (!LoadSourcesFromConfiguration(config))
-			return false;
+		return ReadConfigurableProperties(ReadConfigurablePropertiesContext::INITIALIZATION);
+	}
+
+	bool SoundManager::OnReadConfigurableProperties(JSONReadConfiguration config, ReadConfigurablePropertiesContext context)
+	{
+		if (context == ReadConfigurablePropertiesContext::INITIALIZATION)
+		{
+			// initialize the categories
+			if (!LoadCategoriesFromConfiguration(config))
+				return false;
+			// Initialize the sources
+			if (!LoadSourcesFromConfiguration(config))
+				return false;
+		}
 		return true;
 	}
 
-	bool SoundManager::LoadCategoriesFromConfiguration(nlohmann::json const& config)
+
+	bool SoundManager::LoadCategoriesFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<false>( // no [recurse] reading
 			"categories",
@@ -1198,7 +1207,7 @@ namespace chaos
 			SoundCategoryLoader(this));
 	}
 
-	bool SoundManager::LoadSourcesFromConfiguration(nlohmann::json const& config)
+	bool SoundManager::LoadSourcesFromConfiguration(JSONReadConfiguration config)
 	{
 		return LoadObjectsFromConfiguration<true>(
 			"sources",
