@@ -109,7 +109,7 @@ namespace chaos
 	* Window : a binding class between chaos and GLFW to handle window (beware the prefix "My")
 	*/
 
-	class CHAOS_API Window : public Object, public WindowInterface, public ImGuiDrawableOwnerInterface, public ConfigurableInterface
+	class CHAOS_API Window : public Object, public WindowInterface, public ImGuiDrawableOwnerInterface, public ConfigurableInterface, public KeyEventActionEnumerableInterface
 	{
 		friend class WindowApplication;
 
@@ -236,17 +236,12 @@ namespace chaos
 		/** override */
 		virtual bool OnKeyEventImpl(KeyEvent const& event) override;
 		/** override */
-		virtual bool OnMouseMoveImpl(glm::vec2 const& delta) override;
-		/** override */
-		virtual bool OnMouseButtonImpl(int button, int action, int modifier) override;
-		/** override */
-		virtual bool OnMouseWheelImpl(double scroll_x, double scroll_y) override;
-		/** override */
-		virtual bool OnCharEventImpl(unsigned int c) override;
-		/** override */
 		virtual bool OnDraw(GPURenderer* renderer, GPUProgramProviderInterface const* uniform_provider, WindowDrawParams const& draw_params) override;
 		/** override */
 		virtual bool DoTick(float delta_time) override;
+
+		/** override */
+		virtual bool EnumerateKeyEventActions(KeyEventActionProcessor & processor) override;
 
 		/** create the root widget */
 		virtual bool CreateRootWidget();

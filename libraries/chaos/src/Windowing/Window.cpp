@@ -757,12 +757,23 @@ namespace chaos
 
 			Application::SetApplicationInputMode(InputMode::MOUSE);
 
+			// try process ourselves
+			shuxxx
+
+
+
+
+
 			glm::vec2 position = { float(x), float(y) };
 			if (!my_window->IsMousePositionValid())
 				my_window->OnMouseMove({ 0.0f, 0.0f });
 			else
 				my_window->OnMouseMove(position - my_window->mouse_position.value());
 			my_window->mouse_position = position;
+
+			// give opportunity to application
+			if (Application* application = Application::GetInstance())
+				application->OnMouseMove(delta);
 		});
 	}
 
@@ -787,7 +798,12 @@ namespace chaos
 			if (WindowApplication* application = Application::GetInstance())
 				application->SetInputMode(InputMode::MOUSE);
 
-			my_window->OnMouseButton(button, action, modifier);
+			// try process ourselves
+			if (my_window->OnMouseButton(button, action, modifier))
+				return;
+			// give opportunity to application
+			if (Application* application = Application::GetInstance())
+				application->OnMouseButton(button, action, modifier);
 		});
 	}
 
@@ -807,7 +823,12 @@ namespace chaos
 
 			Application::SetApplicationInputMode(InputMode::MOUSE);
 
-			my_window->OnMouseWheel(scroll_x, scroll_y);
+			// try process ourselves
+			if (my_window->OnMouseWheel(scroll_x, scroll_y))
+				return;
+			// give opportunity to application
+			if (Application* application = Application::GetInstance())
+				application->OnMouseWheel(scroll_x, scroll_y);
 		});
 	}
 
@@ -843,7 +864,12 @@ namespace chaos
 			event.action = action;
 			event.modifier = modifier;
 
-			my_window->OnKeyEvent(event);
+			// try process ourselves
+			if (my_window->OnKeyEvent(event))
+				return;
+			// give opportunity to application
+			if (Application* application = Application::GetInstance())
+				application->OnKeyEvent(event);
 		});
 	}
 
@@ -863,7 +889,12 @@ namespace chaos
 
 			Application::SetApplicationInputMode(InputMode::KEYBOARD);
 
-			my_window->OnCharEvent(c);
+			// try process ourselves
+			if (my_window->OnCharEvent(c))
+				return;
+			// give opportunity to application
+			if (Application* application = Application::GetInstance())
+				application->OnCharEvent(c);
 		});
 	}
 
@@ -1055,6 +1086,27 @@ namespace chaos
 	CHAOS_HELP_TEXT(SHORTCUTS, "F9  : ScreenCapture");
 	CHAOS_HELP_TEXT(SHORTCUTS, "F10 : ToggleFullscreen");
 
+	bool Window::EnumerateKeyEventActions(KeyEventActionProcessor & processor)
+	{
+		bool result = false;
+
+		result = processor(KeyboardButton::F9, 0, "Screen Capture", [this]()
+		{
+			ScreenCapture();
+		});
+		if (result)
+			return true;
+
+		result = processor(KeyboardButton::F10, 0, "Toggle Fullscreen", [this]()
+		{
+			ToggleFullscreen();
+		});
+		if (result)
+			return true;
+
+		return false;
+	}
+
 	bool Window::OnKeyEventImpl(KeyEvent const& event)
 	{
 		// kill the window (use ALT+F4 for the moment)
@@ -1079,48 +1131,8 @@ namespace chaos
 			ToggleFullscreen();
 			return true;
 		}
-		// give opportunity to application
-		if (Application* application = Application::GetInstance())
-			if (application->OnKeyEvent(event))
-				return true;
 		// super method
 		return WindowInterface::OnKeyEventImpl(event);
-	}
-
-	bool Window::OnMouseMoveImpl(glm::vec2 const& delta)
-	{
-		// give opportunity to application
-		if (Application* application = Application::GetInstance())
-			if (application->OnMouseMove(delta))
-				return true;
-		return WindowInterface::OnMouseMoveImpl(delta);
-	}
-
-	bool Window::OnMouseButtonImpl(int button, int action, int modifier)
-	{
-		// give opportunity to application
-		if (Application* application = Application::GetInstance())
-			if (application->OnMouseButton(button, action, modifier))
-				return true;
-		return WindowInterface::OnMouseButtonImpl(button, action, modifier);
-	}
-
-	bool Window::OnMouseWheelImpl(double scroll_x, double scroll_y)
-	{
-		// give opportunity to application
-		if (Application* application = Application::GetInstance())
-			if (application->OnMouseWheel(scroll_x, scroll_y))
-				return true;
-		return WindowInterface::OnMouseWheelImpl(scroll_x, scroll_y);
-	}
-
-	bool Window::OnCharEventImpl(unsigned int c)
-	{
-		// give opportunity to application
-		if (Application* application = Application::GetInstance())
-			if (application->OnCharEvent(c))
-				return true;
-		return WindowInterface::OnCharEventImpl(c);
 	}
 
 	void Window::DrawWindowImGui()
